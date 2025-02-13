@@ -41,6 +41,38 @@ class Food(Product):
             return "Xato: Yaroqlilik muddati o'tgan mahsulot sotib olinmaydi."
         return super().sell(amount)
 
+class Basket:
+    def __init__(self):
+        self.products = []
+
+    def add_product(self, product):
+        self.products.append(product)
+        return f"{product.name} qo'shildi.Barcha mahsulotlar: {self.show()}"
+
+    def remove_product(self, product_name):
+        for product in self.products:
+            if product.name == product_name:
+                self.products.remove(product)
+                return f"{product_name} olib tashlandi. Qoldiq mahsulotlar: {self.show()}"
+        return "Mahsulot topilmadi."
+
+    def show(self):
+        if self.products:
+            product_info = [product.info() for product in self.products]
+            return product_info
+        else:
+            return "Mahsulotlar yo'q."
+
+
+    def total_price(self):
+        total = 0
+        for product in self.products:
+            total += product.price * product.quantity
+        return total
+
+#----------------------------------------------------------------
+
+
 e = Electronics("Televizor", 1500000, 20, "2 yil")
 print(e.info())
 print(e.sell(5))
@@ -51,3 +83,11 @@ print(f.sell(50))
 
 expired_food = Food("Yaroqsiz Pasta", 2000, 50, "2023-01-01")
 print(expired_food.sell(10))
+
+basket = Basket()
+basket.add_product(e)  
+basket.add_product(f)  
+print(basket.show())
+print(f"Umumiy narx: {basket.total_price()} so'm")
+basket.remove_product("Televizor")
+print(basket.show())
