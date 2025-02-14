@@ -52,7 +52,7 @@ class Food(Product):
 class Basket:
     def __init__(self):
         self.__id = uuid.uuid4()
-        self.products = {}  # Store products as {product_id: product_object}
+        self.products = {}
 
     def get_id(self):
         return self.__id
