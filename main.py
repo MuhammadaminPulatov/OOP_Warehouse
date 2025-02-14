@@ -1,10 +1,15 @@
 from datetime import datetime
+import uuid
 
 class Product:
     def __init__(self, name, price, quantity):
+        self.__id = uuid.uuid4()
         self.name = name
         self.price = price
         self.quantity = quantity
+
+    def get_id(self):
+        return self.__id
 
     def info(self):
         return f"{self.name} - {self.quantity} x {self.price} so'm"
@@ -20,6 +25,7 @@ class Product:
         self.quantity += amount
         return f"{amount} dona {self.name} omborga qo'shildi. Yangi qoldiq: {self.quantity} dona."
 
+
 class Electronics(Product):
     def __init__(self, name, price, quantity, warranty):
         super().__init__(name, price, quantity)
@@ -27,6 +33,7 @@ class Electronics(Product):
 
     def info(self):
         return f"{self.name} - {self.quantity} x {self.price} so'm | Kafolat: {self.warranty}"
+
 
 class Food(Product):
     def __init__(self, name, price, quantity, expiration_date):
@@ -41,53 +48,113 @@ class Food(Product):
             return "Xato: Yaroqlilik muddati o'tgan mahsulot sotib olinmaydi."
         return super().sell(amount)
 
+
 class Basket:
     def __init__(self):
-        self.products = []
+        self.__id = uuid.uuid4()
+        self.products = {}  # Store products as {product_id: product_object}
+
+    def get_id(self):
+        return self.__id
 
     def add_product(self, product):
-        self.products.append(product)
-        return f"{product.name} qo'shildi.Barcha mahsulotlar: {self.show()}"
+        product_id = product.get_id()
+        if product_id not in self.products:
+            self.products[product_id] = product
+            return f"{product.name} qo'shildi. Barcha mahsulotlar: {self.show()}"
+        else:
+            return f"Xato: {product.name} allaqachon savatda bor."
 
-    def remove_product(self, product_name):
-        for product in self.products:
-            if product.name == product_name:
-                self.products.remove(product)
-                return f"{product_name} olib tashlandi. Qoldiq mahsulotlar: {self.show()}"
-        return "Mahsulot topilmadi."
+    def remove_product(self, product_id):
+        if product_id in self.products:
+            removed_product = self.products.pop(product_id)
+            return f"{removed_product.name} olib tashlandi. Qoldiq mahsulotlar: {self.show()}"
+        else:
+            return "Xato: Mahsulot topilmadi."
 
     def show(self):
         if self.products:
-            product_info = [product.info() for product in self.products]
+            product_info = [product.info() for product in self.products.values()]
             return product_info
         else:
             return "Mahsulotlar yo'q."
 
-
     def total_price(self):
         total = 0
-        for product in self.products:
+        for product in self.products.values():
             total += product.price * product.quantity
         return total
 
-#----------------------------------------------------------------
+
+def main_menu():
+    print("\n=== Savat Menyusi ===")
+    print("1. Mahsulot qo'shish")
+    print("2. Mahsulotni olib tashlash")
+    print("3. Savatdagi mahsulotlarni ko'rish")
+    print("4. Umumiy narxni ko'rish")
+    print("5. Chiqish")
+    choice = input("Tanlang (1/2/3/4/5): ")
+    return choice
 
 
-e = Electronics("Televizor", 1500000, 20, "2 yil")
-print(e.info())
-print(e.sell(5))
+def add_product_menu(basket):
+    name = input("Mahsulot nomini kiriting: ")
+    price = float(input("Narxini kiriting: "))
+    quantity = int(input("Miqdorini kiriting: "))
+    category = input("Kategoriya (electronics/food): ").lower()
 
-f = Food("Pasta", 2000, 100, "2025-10-01")
-print(f.info())
-print(f.sell(50))
+    if category == "electronics":
+        warranty = input("Kafolat muddatini kiriting (masalan, '2 yil'): ")
+        product = Electronics(name, price, quantity, warranty)
+    elif category == "food":
+        expiration_date = input("Yaroqlilik muddatini kiriting (YYYY-MM-DD): ")
+        product = Food(name, price, quantity, expiration_date)
+    else:
+        print("Xato: Noto'g'ri kategoriya.")
+        return
 
-expired_food = Food("Yaroqsiz Pasta", 2000, 50, "2023-01-01")
-print(expired_food.sell(10))
+    print(basket.add_product(product))
 
-basket = Basket()
-basket.add_product(e)  
-basket.add_product(f)  
-print(basket.show())
-print(f"Umumiy narx: {basket.total_price()} so'm")
-basket.remove_product("Televizor")
-print(basket.show())
+
+def remove_product_menu(basket):
+    product_id = input("Olib tashlanadigan mahsulotning ID raqamini kiriting: ")
+    try:
+        product_id = uuid.UUID(product_id)  # Convert string to UUID
+        print(basket.remove_product(product_id))
+    except ValueError:
+        print("Xato: Noto'g'ri ID formati.")
+
+
+def view_products_menu(basket):
+    products = basket.show()
+    if isinstance(products, list):
+        for product in products:
+            print(product)
+    else:
+        print(products)
+
+
+def total_price_menu(basket):
+    print(f"Umumiy narx: {basket.total_price()} so'm")
+
+
+def main():
+    basket = Basket()
+    while True:
+        choice = main_menu()
+        if choice == "1":
+            add_product_menu(basket)
+        elif choice == "2":
+            remove_product_menu(basket)
+        elif choice == "3":
+            view_products_menu(basket)
+        elif choice == "4":
+            total_price_menu(basket)
+        elif choice == "5":
+            print("Dasturdan chiqildi.")
+            break
+        else:
+            print("Xato: Noto'g'ri tanlov. Iltimos, qaytadan urinib ko'ring.")
+
+
+main()
